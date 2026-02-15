@@ -79,7 +79,7 @@ def home():
             api_key = os.environ.get("SENDGRID_API_KEY")
 
             message = Mail(
-                from_email="jaindaksh2090@@gmail.com",
+                from_email="jaindaksh2090@gmail.com",
                 to_emails=email,
                 subject="Your TOPSIS Result",
                 html_content="<strong>Attached is your TOPSIS result file.</strong>"
