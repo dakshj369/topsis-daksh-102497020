@@ -74,10 +74,12 @@ def home():
         # ---- Send Email ----
         # ---- Send Email via SendGrid ----
         try:
+            from sendgrid.helpers.mail import Attachment, FileContent, FileName, FileType, Disposition
+
             api_key = os.environ.get("SENDGRID_API_KEY")
 
             message = Mail(
-                from_email="your_verified_email@example.com",
+                from_email="jaindaksh2090@@gmail.com",
                 to_emails=email,
                 subject="Your TOPSIS Result",
                 html_content="<strong>Attached is your TOPSIS result file.</strong>"
@@ -86,22 +88,23 @@ def home():
             if os.path.exists(output_path):
                 with open(output_path, "rb") as f:
                     data = f.read()
-                    encoded = base64.b64encode(data).decode()
+                    encoded_file = base64.b64encode(data).decode()
 
-                    message.add_attachment(
-                        {
-                            "content": encoded,
-                            "type": "text/csv",
-                            "filename": "result.csv",
-                            "disposition": "attachment"
-                        }
+                    attachment = Attachment(
+                        FileContent(encoded_file),
+                        FileName("result.csv"),
+                        FileType("text/csv"),
+                        Disposition("attachment")
                     )
+
+                    message.attachment = attachment
 
             sg = SendGridAPIClient(api_key)
             sg.send(message)
 
         except Exception as e:
             return f"Email sending failed: {str(e)}"
+
 
 
         if os.path.exists(output_path):
