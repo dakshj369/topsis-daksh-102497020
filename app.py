@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request
-from flask_mail import Mail, Message
 import os
 import uuid
 import re
 from topsis_daksh_102497020.topsis_engine import TopsisCalculator
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+import base64
 
 # IMPORTANT: We will later import our own package
 # from your_package_name.topsis import calculate_topsis
@@ -20,17 +22,6 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 # -----------------------------------------------
 
 
-# ---------------- MAIL CONFIG ----------------
-# Use environment variables instead of hardcoding
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USE_SSL"] = False
-app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
-
-
-mail = Mail(app)
 # ---------------------------------------------
 
 
@@ -81,12 +72,37 @@ def home():
 
 
         # ---- Send Email ----
-        msg = Message(
-            subject="Your TOPSIS Result",
-            sender=app.config["MAIL_USERNAME"],
-            recipients=[email]
-        )
-        msg.body = "Attached is your TOPSIS result file."
+        # ---- Send Email via SendGrid ----
+        try:
+            api_key = os.environ.get("SENDGRID_API_KEY")
+
+            message = Mail(
+                from_email="your_verified_email@example.com",
+                to_emails=email,
+                subject="Your TOPSIS Result",
+                html_content="<strong>Attached is your TOPSIS result file.</strong>"
+            )
+
+            if os.path.exists(output_path):
+                with open(output_path, "rb") as f:
+                    data = f.read()
+                    encoded = base64.b64encode(data).decode()
+
+                    message.add_attachment(
+                        {
+                            "content": encoded,
+                            "type": "text/csv",
+                            "filename": "result.csv",
+                            "disposition": "attachment"
+                        }
+                    )
+
+            sg = SendGridAPIClient(api_key)
+            sg.send(message)
+
+        except Exception as e:
+            return f"Email sending failed: {str(e)}"
+
 
         if os.path.exists(output_path):
             with open(output_path, "rb") as fp:
