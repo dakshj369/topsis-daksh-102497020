@@ -106,12 +106,6 @@ def home():
             return f"Email sending failed: {str(e)}"
 
 
-
-        if os.path.exists(output_path):
-            with open(output_path, "rb") as fp:
-                msg.attach("result.csv", "text/csv", fp.read())
-            mail.send(msg)
-
         return "TOPSIS executed successfully. Check your email."
 
     return render_template("index.html")
